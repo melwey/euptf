@@ -1,0 +1,169 @@
+% !TEX encoding = Windows Latin 1
+\documentclass[a4paper,11pt]{article}
+
+\usepackage[latin1]{inputenc}
+\usepackage[colorlinks=false]{hyperref}	% to make hyperlinks in the text.
+\usepackage[hmargin=1.5cm,vmargin=2cm]{geometry}
+\usepackage{natbib}
+\usepackage{Sweave}
+
+\title{The \texttt{euptf} package}
+\author{Mélanie Weynants and Brigitta Tóth \\ \small mweynants@gmail.com}
+
+\SweaveOpts{concordance=TRUE}
+\begin{document}
+\maketitle
+The \texttt{euptf} package provides pedotransfer functions (PTFs) for the prediction of hydraulic properties in European soils. The PTFs were trained and validated on subsets of the European Hydropedological Data Inventory \citep[EU-HYDI,]{euhydi}. the methodology and the results are published in the European Journal of Soil Science \citep{Toth2014}.\\
+This vignette is a short tutorial explaining how to use the PTFs and how to export the results outside R for non-R users.
+
+\section{Installation}
+A working R installation is needed to use the PTFs in \texttt{euptf}. Please refer to \url{http://cran.r-project.org/} for the installation of the latest R version.\\
+The \texttt{euptf} package is available from the European soil portal: \url{http://eusoils.jrc.ec.europa.eu}. %and from CRAN?\\
+To install \texttt{euptf}, open an R session, set the working directory to where you downloaded the package using \texttt{setwd()} and type the following command in the console window:
+<<echo=TRUE,eval=false>>=
+# install dependencies if need be
+IP <- installed.packages()[,1]
+if (!"rpart" %in% IP){install.packages("rpart")}
+if (!"gWidgets" %in% IP){install.packages("gWidgets")}
+if (!"gWidgetstcltk" %in% IP){install.packages("gWidgetstcltk")}
+if (!"raster" %in% IP){install.packages("raster")}
+# install package
+install.packages("euptf_1.4.tar.gz", repos=NULL, type="source")
+require(euptf)
+help(euptf)
+@
+<<echo=FALSE,eval=TRUE>>=
+require(euptf)
+@
+The last line opens the package help in the default internet browser.
+
+\section{Getting started: data preparation}
+Before using the PTFs you need to format your data so that the package's functions can access them. An example data frame is provided:
+<<echo=TRUE>>=
+data(ptf.data)
+str(ptf.data)
+@
+When creating a new data frame, the available variables should be named as in the example. If one of the variables has no observations, it can be omitted from the data frame. Missing values should be assigned value \texttt{NA}. Besides, if the class PTFs are to be used, the data frame should have additional columns \texttt{TEXT\_FAO\_MOD} and/or \texttt{TEXT\_US}. If the particle size distribution (sand (0.5-2 mm), silt (0.002-0.5 mm), clay ($<$0.002 mm)) is available, they can be obtained using the following commands:
+<<echo=TRUE>>=
+# set FAO texture class
+ptf.data$TEXT_FAO_MOD <- psd2classFAO_MOD(ptf.data$USSAND, ptf.data$USSILT, ptf.data$USCLAY, 
+    ptf.data$OC, option=TRUE)
+# set USDA texture class
+ptf.data$TEXT_US <- psd2classUS(ptf.data$USSAND, ptf.data$USSILT, ptf.data$USCLAY, 
+    ptf.data$OC, option=TRUE)
+@
+It is important to set \texttt{option = TRUE} otherwise the PTFs will fail and produce only \texttt{NA} values.
+
+For non R users, the data can also be prepared in an other software and imported into R. In that case, the names of the columns have to be respected in the source file. For example, data prepared in an Excel workbook named \textsf{myworkbook.xlsx} could be imported either by first saving the relevant Excel worksheet in comma separated table, for instance \textsf{myworksheet.csv} or by importing them directly:
+<<echo=TRUE,eval=FALSE>>=
+## import data from csv file:
+mydata <- read.csv("myworksheet.csv")
+## or with package xlsx:
+# install the package if not yet done:
+if (!"xlsx" %in% IP){install.packages("xlsx")}
+# load the package:
+require("xlsx")
+# import data from xlsx file:
+mydata <- read.xlsx("myworkbook.xlsx", sheetName="myworksheet")
+# see ?read.xlsx for more options
+@
+
+\section{Choosing the right PTF}
+Typing \texttt{ChoosePTF()} in the R console will open a window helping to choose the right PTF based on the available input data and the desired output. Checking the available variables and clicking on the "What PTF?" button will update the PTF associated to each output.
+
+\section{Running the PTFs}
+Once the data are ready and the PTF has been chosen, it can be called with function \texttt{predict.ptf}. The output of the function varies from one PTF to another, depending if it is a point or a parameter PTF.
+
+Let's take three examples that can illustrate the different cases and run them on the example dataset \texttt{ptf.data}.
+
+\paragraph{Example 1} We want to predict the water content at field capacity, based on Topsoil/Subsoil distinction, sand, silt and clay contents, organic carbon content and bulk density. Using \texttt{ChoosePTF}, we see that we should use \texttt{PTF09}.
+<<echo=TRUE,eval=FALSE>>=
+?PTF09
+@ 
+The help page of PTF09 tells us it is a linear regression based PTF predicting the water content at field capacity (FC) from PSD and OC.
+<<echo=TRUE,eval=TRUE>>=
+ex1 <- predict.ptf(newdata = ptf.data, ptf = "PTF09")
+str(ex1)
+@
+The output is a vector of 60 elements  giving the predicted water content at field capacity (330 cm of suction head) for each row in \texttt{ptf.data}.
+
+\paragraph{Example 2} If we want to predict the water content at another matric potential, for instance $h=-100$ cm, we need to predict it with MRC PTF. With the same input data, \texttt{ChoosePTF} tells us that we have to use \texttt{PTF21}.
+<<echo=TRUE,eval=FALSE>>=
+?PTF21
+@ 
+The help page of PTF21 tells us it is a class PTF giving Mualem-van Genuchten parameters.\\
+<<echo=TRUE,eval=TRUE>>=
+ex2 <- predict.ptf(newdata = ptf.data, ptf = "PTF21")
+str(ex2)
+@
+The output is now a 60x4 matrix. It is not what we want. \texttt{PTF21} gives us the 4 parameters of the van Genuchten model (assuming $m=1-1/n$), but we would like it to be evaluated at a suction head of 100 cm. So we add this request to the call of \texttt{predict.ptf}.
+<<echo=TRUE,eval=TRUE>>=
+ex2 <- predict.ptf(newdata = ptf.data, ptf = "PTF21", h = 100)
+str(ex2)
+@
+But now we have a 1x4x60 array. What does it mean? Looking at the attributes of this array, we see that the names of the 4 elements in the second dimension are \texttt{ "h" "theta" "Se" "K"}. We are interested in the water content values \texttt{theta} for our 60 observations.
+<<echo=TRUE,eval=TRUE>>=
+ex2 <- ex2[,2,]
+str(ex2)
+@
+
+\paragraph{Example 3} If we are interested in the parameters of both the moisture retention and the hydraulic conductivity curves, \texttt{ChoosePTF} tells us that we have to use \texttt{PTF19}.
+<<echo=TRUE,eval=FALSE>>=
+?PTF19
+@ 
+The help page of PTF19 says it is a class PTF giving Mualem-van Genuchten parameters for combinations of USDA texture classes and topsoil/subsoil distinction.\\
+As a consequence, we have to make sure the USDA texture class is in the input data before running the PTF.
+<<echo=TRUE,eval=TRUE>>=
+ptf.data$TEXT_US <- psd2classUS(ptf.data$USSAND, ptf.data$USSILT, ptf.data$USCLAY, 
+    ptf.data$OC, option=TRUE)
+ex3 <- predict.ptf(newdata = ptf.data, ptf = "PTF19")
+str(ex3)
+@
+The output is a 60x7 matrix, the 7 parameters of the Mualem-van Genuchten model for each of the 60 observations in \texttt{data.ptf}. As in example 2, we can evaluate the model at given matric potentials.
+<<echo=TRUE,eval=TRUE>>=
+ex3 <- predict.ptf(newdata = ptf.data, ptf = "PTF19", h = 10^(seq(0,4.5,by = 0.1)))
+str(ex3)
+@
+The retention and conductivity curves obtained can be plotted. For example, for the fifth observation in \texttt{ptf.data}, we can do:
+\begin{center}
+<<echo=TRUE,eval=TRUE,fig=TRUE,width=8,height=5>>=
+# divide the figure into 2 plotting areas
+par(mfrow=c(1,2))
+# select calculated values for the fifth sample
+i <- 5
+# plot h vs theta in the first plotting area
+plot(ex3[,1,i], ex3[,2,i], type = "l", log = "x", xlab = "suction head (cm)",
+    ylab = "Volumetric water content")
+# plot h vs K in the second plotting area
+plot(ex3[,1,i], ex3[,4,i], type = "l", log = "xy", xlab = "suction head (cm)",
+    ylab = "Hydraulic conductivity (cm/d)")
+@
+\end{center}
+
+In conclusion, if \texttt{n} is the number of observations in the input data, \texttt{predict.ptf} returns:
+\begin{itemize}
+\item a \texttt{nx1} vector, for point PTFs
+\item a \texttt{nx4} or \texttt{nx7} matrix for parameters PTFs
+\item a \texttt{mx4xn} array for parameters PTFs that were given \texttt{m} suction head values at which to be evaluated.
+\end{itemize}
+
+\section{Exporting the results}
+For non-R users, the results can be exported for use with other software, either as text files or directly in Excel. For example, the two ways of predicting the field capacity can be exported as the columns of a new table.
+<<echo=TRUE,eval=FALSE>>=
+FC <- data.frame(FC1 = ex1, FC2 = predict.ptf(newdata = ptf.data, ptf = "PTF21", h = 330)[,2,])
+str(FC)
+## example to save the predicted values to a csv file:
+write.csv(FC, file = "myFC.csv")
+# see ?write.csv for additional options
+## example to save predicted values to xlsx file:
+require("xlsx")
+write.xlsx(x = FC, file = "myoutput.xlsx", sheetName = "myFC", row.names = FALSE)
+@
+
+\section{Running the PTFs on spatial data}
+Function \texttt{predict.ptf.raster} makes it possible to run the PTFs on a \texttt{RasterStack} object, created with R package \texttt{raster}. The layers of the RasterStack must be named with valid names, like the column names in the example dataset \texttt{data(ptf.data)}. The output of the PTF is saved as a \texttt{RasterLayer} or a \texttt{RasterBrick} and written in a raster file.
+
+\bibliographystyle{elsarticle-harv}
+\bibliography{bib}
+
+\end{document}

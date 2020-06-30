@@ -1,0 +1,11 @@
+Package: euptf
+TType: Package
+Title: Hydraulic pedotransfer functions for Europe
+Version: 1.4
+Date: 2016-03-09
+Author: Melanie Weynants and Brigitta Toth
+Maintainer: <mweynants@gmail.com>
+Depends: R (>= 3.2.1), gWidgets, rpart, raster
+Suggests: soiltexture, soilwater, xlsx
+Description: euptf is a set of hydraulic pedotransfer functions trained on the European HYdropedological Data Inventory (EUHYDI). It allows point estimation of soil water content at saturation (THS), field capacity (FC, pF 2.5) and wilting point (WP, pF 4.2) and of saturated hydraulic conductivity (KS). It can also return parameter estimations of the (Mualem-)van Genuchten model describing the soil water retention and unsaturated hydraulic conductivity curves. The PTFs can also be run on raster spatial data.
+License: GPL-3

@@ -1,0 +1,20 @@
+citHeader("To cite euptf in publications use:")
+
+citEntry(entry = "Article",
+  title        = "New generation of hydraulic pedotransfer functions for Europe",
+  author       = personList(as.person("Brigitta Tóth"),
+                   as.person("Mélanie Weynants"),
+				   as.person("Attila Nemes"),
+				   as.person("Andras Makó"),
+				   as.person("George Bilas"),
+				   as.person("Gergely Tóth")),
+  journal      = "European Journal of Soil Science",
+  year         = "2014",
+  doi          = "10.1111/ejss.12192",
+  textVersion  =
+  paste("Tóth Brigitta, Weynants Mélanie, Nemes Attila, Makó Andras, Bilas George and Tóth Gergely (2014).",
+  "New generation of hydraulic pedotransfer functions for Europe. ",
+  "European Journal of Soil Science. doi:10.1111/ejss.12192")
+)
+
+
