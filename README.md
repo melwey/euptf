@@ -9,7 +9,7 @@ European Journal of Soil Science (Tóth et al., 2014).
 References
 
 Tóth, B., Weynants, M., Nemes, A., Makó, A., Bilas, G., Tóth, G., 2014. New generation of hydraulic
-pedotransfer functions for Europe. European Journal Of Soil Science in Press.
+pedotransfer functions for Europe. European Journal Of Soil Science 66-1 pp 226-238. DOI [10.1111/ejss.12192](https://doi.org/10.1111/ejss.12192).
 
 Weynants, M., Tóth, G., Montanarella, L., et al., 2013. European Hydropedological Inventory (EU-HYDI).
-Publications Office of the European Union, Luxembourg.
+Publications Office of the European Union, Luxembourg. DOI: [10.2788/5936](https://doi.org/10.2788/5936)
